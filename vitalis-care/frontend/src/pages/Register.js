@@ -12,11 +12,10 @@ import {
   Alert 
 } from '@mui/material';
 import { PersonAdd as PersonAddIcon } from '@mui/icons-material';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { isBusinessEmail, isValidPassword } from '../utils/auth';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-function Register() {
+function Register({ setIsAuthenticated, setUser }) {
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -27,7 +26,6 @@ function Register() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { register } = useAuth();
   
   const { nome, email, senha, confirmSenha, cargo } = formData;
   
@@ -45,18 +43,6 @@ function Register() {
       return;
     }
     
-    // Validar email corporativo
-    if (!isBusinessEmail(email)) {
-      setError('Apenas emails corporativos são permitidos');
-      return;
-    }
-    
-    // Validar senha
-    if (!isValidPassword(senha)) {
-      setError('A senha deve ter no mínimo 8 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos');
-      return;
-    }
-    
     // Verificar senhas
     if (senha !== confirmSenha) {
       setError('As senhas não conferem');
@@ -66,20 +52,29 @@ function Register() {
     setLoading(true);
     
     try {
-      const result = await register({
+      const res = await axios.post('/api/auth/register', {
         nome,
         email,
         senha,
         cargo
       });
       
-      if (result.success) {
+      if (res.data.token) {
+        // Salvar token
+        localStorage.setItem('token', res.data.token);
+        
+        // Configurar cabeçalho para requisições futuras
+        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        
+        // Atualizar estado
+        setUser(res.data.user);
+        setIsAuthenticated(true);
+        
+        // Redirecionar
         navigate('/');
-      } else {
-        setError(result.message);
       }
     } catch (err) {
-      setError('Erro ao registrar. Tente novamente.');
+      setError(err.response?.data?.message || 'Erro ao registrar. Tente novamente.');
       console.error('Erro ao registrar:', err);
     } finally {
       setLoading(false);
@@ -140,7 +135,6 @@ function Register() {
               autoComplete="email"
               value={email}
               onChange={onChange}
-              helperText="Apenas emails corporativos são aceitos (não use @gmail, @hotmail, etc.)"
             />
             <TextField
               margin="normal"
@@ -163,7 +157,6 @@ function Register() {
               autoComplete="new-password"
               value={senha}
               onChange={onChange}
-              helperText="Mínimo de 8 caracteres, incluindo letras maiúsculas, minúsculas, números e símbolos"
             />
             <TextField
               margin="normal"
