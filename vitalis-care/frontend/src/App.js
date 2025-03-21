@@ -5,6 +5,8 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import ptBR from 'date-fns/locale/pt-BR';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
 // Contexto de autenticação
 import { useAuth } from './context/AuthContext';
@@ -40,9 +42,13 @@ const theme = createTheme({
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
   
-  // Se ainda estiver carregando, não faz nada
+  // Se ainda estiver carregando, mostra indicador de carregamento
   if (loading) {
-    return null;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
   }
   
   // Se não estiver autenticado, redireciona para o login
@@ -62,11 +68,14 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={
-            <PrivateRoute>
-              <Layout />
-            </PrivateRoute>
-          }>
+          <Route
+            path="/"
+            element={
+              <PrivateRoute>
+                <Layout />
+              </PrivateRoute>
+            }
+          >
             <Route index element={<Dashboard />} />
             <Route path="funcionarios" element={<Funcionarios />} />
             <Route path="configuracoes" element={<Configuracoes />} />
