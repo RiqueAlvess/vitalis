@@ -27,8 +27,9 @@ export const isBusinessEmail = (email) => {
   return domain ? !freeEmailDomains.includes(domain) : false;
 };
 
-// Validar formato de senha
+// Validar formato de senha (permite ponto)
 export const isValidPassword = (password) => {
-  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  // Pelo menos 8 caracteres, 1 maiúscula, 1 minúscula, 1 número, 1 caractere especial (incluindo ponto)
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\da-zA-Z]).{8,}$/;
   return regex.test(password);
 };
