@@ -1,48 +1,46 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { LocalizationProvider } from '@mui/x-date-pickers';
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
-import ptBR from 'date-fns/locale/pt-BR';
-import CircularProgress from '@mui/material/CircularProgress';
-import Box from '@mui/material/Box';
-
-// Contexto de autenticação
-import { useAuth } from './context/AuthContext';
-
-// Páginas
+import { CircularProgress, Box } from '@mui/material';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
-import Funcionarios from './pages/Funcionarios';
-import Configuracoes from './pages/Configuracoes';
-import LogsSincronizacao from './pages/LogsSincronizacao';
-import Perfil from './pages/Perfil';
+import axios from 'axios';
 
-// Componentes
-import Layout from './components/Layout';
+// Tema simplificado
+const theme = createTheme();
 
-// Tema da aplicação
-const theme = createTheme({
-  palette: {
-    primary: {
-      main: '#1976d2',
-    },
-    secondary: {
-      main: '#dc004e',
-    },
-  },
-  typography: {
-    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
-  },
-});
+function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
 
-// Rota privada (requer autenticação)
-const PrivateRoute = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
-  
-  // Se ainda estiver carregando, mostra indicador de carregamento
+  // Verificar autenticação ao carregar
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      // Verificar se o token é válido
+      axios.get('/api/auth/profile')
+        .then(res => {
+          setUser(res.data.user);
+          setIsAuthenticated(true);
+          setLoading(false);
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
+          setIsAuthenticated(false);
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  }, []);
+
+  // Mostrar indicador de carregamento
   if (loading) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
@@ -50,41 +48,18 @@ const PrivateRoute = ({ children }) => {
       </Box>
     );
   }
-  
-  // Se não estiver autenticado, redireciona para o login
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  // Se estiver autenticado, renderiza o componente
-  return children;
-};
 
-function App() {
   return (
     <ThemeProvider theme={theme}>
-      <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-        <CssBaseline />
+      <CssBaseline />
+      <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route
-            path="/"
-            element={
-              <PrivateRoute>
-                <Layout />
-              </PrivateRoute>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="funcionarios" element={<Funcionarios />} />
-            <Route path="configuracoes" element={<Configuracoes />} />
-            <Route path="logs" element={<LogsSincronizacao />} />
-            <Route path="perfil" element={<Perfil />} />
-          </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/login" element={isAuthenticated ? <Navigate to="/" /> : <Login setIsAuthenticated={setIsAuthenticated} setUser={setUser} />} />
+          <Route path="/register" element={isAuthenticated ? <Navigate to="/" /> : <Register setIsAuthenticated={setIsAuthenticated} setUser={setUser} />} />
+          <Route path="/" element={isAuthenticated ? <Dashboard user={user} setIsAuthenticated={setIsAuthenticated} /> : <Navigate to="/login" />} />
+          <Route path="*" element={<Navigate to="/" />} />
         </Routes>
-      </LocalizationProvider>
+      </BrowserRouter>
     </ThemeProvider>
   );
 }
