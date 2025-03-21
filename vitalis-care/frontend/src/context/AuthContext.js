@@ -17,51 +17,38 @@ export const AuthProvider = ({ children }) => {
   
   // Verificar se o usuário está autenticado ao carregar a página
   useEffect(() => {
-  const checkAuth = async () => {
-    const token = localStorage.getItem('token');
-    
-    if (token) {
-      try {
-        // Make sure token is a string before decoding
-        if (typeof token !== 'string') {
-          logout();
-          return;
-        }
-        
-        // Verify token format before decoding
-        if (!token.includes('.')) {
-          logout();
-          return;
-        }
-        
-        const decoded = jwt_decode(token);
-        const currentTime = Date.now() / 1000;
-        
-        if (decoded.exp < currentTime) {
-          logout();
-        } else {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      
+      if (token) {
+        try {
           setAuthToken(token);
+          const decoded = jwt_decode(token);
+          const currentTime = Date.now() / 1000;
           
-          try {
-            const res = await api.get('/auth/profile');
-            setUser(res.data.user);
-            setIsAuthenticated(true);
-          } catch (err) {
-            console.error('Error fetching profile:', err);
+          if (decoded.exp < currentTime) {
             logout();
+          } else {
+            try {
+              const res = await api.get('/auth/profile');
+              setUser(res.data.user);
+              setIsAuthenticated(true);
+            } catch (err) {
+              console.error('Error fetching profile:', err);
+              logout();
+            }
           }
+        } catch (err) {
+          console.error('Token decode error:', err);
+          logout();
         }
-      } catch (err) {
-        console.error('Token decode error:', err);
-        logout();
       }
-    }
+      
+      setLoading(false);
+    };
     
-    setLoading(false);
-  };
-  
-  checkAuth();
-}, []);
+    checkAuth();
+  }, []);
   
   // Login
   const login = async (email, senha) => {
