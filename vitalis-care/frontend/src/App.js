@@ -17,7 +17,7 @@ import LogsSincronizacao from './pages/LogsSincronizacao';
 import Perfil from './pages/Perfil';
 
 // Componentes
-import MainLayout from './components/MainLayout';
+import Layout from './components/Layout';
 import axios from 'axios';
 
 // Tema da aplicação
@@ -110,7 +110,7 @@ function App() {
               path="/" 
               element={
                 isAuthenticated ? 
-                <MainLayout user={user} onLogout={handleLogout} /> : 
+                <Layout user={user} onLogout={handleLogout} /> : 
                 <Navigate to="/login" />
               }
             >
