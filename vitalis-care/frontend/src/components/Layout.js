@@ -146,7 +146,7 @@ function Layout() {
             aria-haspopup="true"
             aria-expanded={menuOpen ? 'true' : undefined}
           >
-            <Avatar alt={user?.nome || 'Usuário'} src="/static/images/avatar.jpg" />
+            <Avatar alt={user?.nome || 'Usuário'} />
           </IconButton>
           <Menu
             id="user-menu"
