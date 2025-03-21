@@ -1,9 +1,14 @@
 // Formatar data para DD/MM/YYYY
 export const formatDate = (date) => {
-  if (!date) return '';
+  if (!date) return '-';
   
-  const d = new Date(date);
-  return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+  try {
+    const d = new Date(date);
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+  } catch (error) {
+    console.error('Date formatting error:', error);
+    return '-';
+  }
 };
 
 // Formatar número como moeda (R$)
