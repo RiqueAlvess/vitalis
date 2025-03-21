@@ -134,11 +134,11 @@ const sincronizarAbsenteismo = async (req, res) => {
     
     // Parâmetros para a API
     const params = {
-      empresa: configAPI.codigo_absenteismo.trim(), // Empresa principal
+      empresa: configAPI.codigo_empresa_principal || configAPI.codigo_absenteismo.trim(), // Empresa principal
       codigo: configAPI.codigo_absenteismo.trim(),
       chave: configAPI.chave_absenteismo.trim(),
       tipoSaida: 'json',
-      empresaTrabalho: '', // Pode ser a mesma ou outra
+      empresaTrabalho: configAPI.codigo_empresa_absenteismo || '', // Empresa de trabalho
       dataInicio: formatarData(dataInicio),
       dataFim: formatarData(dataFim)
     };
