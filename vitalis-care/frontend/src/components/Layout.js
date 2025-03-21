@@ -27,12 +27,10 @@ import {
   Person as PersonIcon, 
   Logout as LogoutIcon 
 } from '@mui/icons-material';
-import { useAuth } from '../context/AuthContext';
 
 const drawerWidth = 240;
 
-function Layout() {
-  const { user, logout } = useAuth();
+function MainLayout({ user, onLogout }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -55,7 +53,7 @@ function Layout() {
   
   const handleLogout = () => {
     handleMenuClose();
-    logout();
+    onLogout();
     navigate('/login');
   };
   
@@ -139,14 +137,20 @@ function Layout() {
           </Typography>
           
           {/* Menu do usuário */}
+          <Typography variant="subtitle1" sx={{ mr: 2 }}>
+            {user?.nome || 'Usuário'}
+          </Typography>
           <IconButton
             onClick={handleMenuOpen}
             sx={{ p: 0 }}
             aria-controls={menuOpen ? 'user-menu' : undefined}
             aria-haspopup="true"
             aria-expanded={menuOpen ? 'true' : undefined}
+            color="inherit"
           >
-            <Avatar alt={user?.nome || 'Usuário'} />
+            <Avatar sx={{ bgcolor: '#fff', color: '#1976d2' }}>
+              {user?.nome?.charAt(0) || 'U'}
+            </Avatar>
           </IconButton>
           <Menu
             id="user-menu"
@@ -213,4 +217,4 @@ function Layout() {
   );
 }
 
-export default Layout;
+export default MainLayout;
