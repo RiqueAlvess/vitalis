@@ -9,7 +9,8 @@ import {
   Typography, 
   Container, 
   Paper,
-  Alert 
+  Alert,
+  CircularProgress 
 } from '@mui/material';
 import { LockOutlined as LockOutlinedIcon } from '@mui/icons-material';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -43,7 +44,9 @@ function Login({ setIsAuthenticated, setUser }) {
     setLoading(true);
     
     try {
+      console.log('Tentando login com:', { email, senha });
       const res = await axios.post('/api/auth/login', { email, senha });
+      console.log('Resposta de login:', res.data);
       
       if (res.data.token) {
         // Salvar token
@@ -58,10 +61,15 @@ function Login({ setIsAuthenticated, setUser }) {
         
         // Redirecionar
         navigate('/');
+      } else {
+        setError('Resposta inválida do servidor');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Erro ao fazer login. Tente novamente.');
       console.error('Erro ao fazer login:', err);
+      setError(
+        err.response?.data?.message || 
+        'Erro ao fazer login. Verifique suas credenciais.'
+      );
     } finally {
       setLoading(false);
     }
@@ -127,10 +135,24 @@ function Login({ setIsAuthenticated, setUser }) {
               type="submit"
               fullWidth
               variant="contained"
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ mt: 3, mb: 2, position: 'relative' }}
               disabled={loading}
             >
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? (
+                <>
+                  <CircularProgress 
+                    size={24} 
+                    sx={{ 
+                      position: 'absolute',
+                      top: '50%',
+                      left: '50%',
+                      marginTop: '-12px',
+                      marginLeft: '-12px',
+                    }} 
+                  />
+                  Entrando...
+                </>
+              ) : 'Entrar'}
             </Button>
             <Grid container justifyContent="flex-end">
               <Grid item>
