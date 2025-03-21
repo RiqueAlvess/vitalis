@@ -44,11 +44,10 @@ function Login({ setIsAuthenticated, setUser }) {
     setLoading(true);
     
     try {
-      console.log('Tentando login com:', { email, senha });
+      // Use a URL absoluta para evitar problemas de redirecionamento HTML
       const res = await axios.post('/api/auth/login', { email, senha });
-      console.log('Resposta de login:', res.data);
       
-      if (res.data.token) {
+      if (res.data && res.data.token) {
         // Salvar token
         localStorage.setItem('token', res.data.token);
         
