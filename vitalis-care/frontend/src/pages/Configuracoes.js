@@ -11,26 +11,40 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
-  Divider
+  Divider,
+  FormControl,
+  InputLabel,
+  OutlinedInput,
+  FormHelperText
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import api from '../services/api';
 
 function Configuracoes() {
   const [config, setConfig] = useState({
     chave_funcionario: '',
     codigo_funcionario: '',
+    codigo_empresa_funcionario: '',
     flag_ativo: true,
     flag_inativo: false,
     flag_pendente: false,
     flag_ferias: false,
     flag_afastado: false,
     chave_absenteismo: '',
-    codigo_absenteismo: ''
+    codigo_absenteismo: '',
+    codigo_empresa_absenteismo: '',
+    codigo_empresa_principal: ''
+  });
+  
+  const [dataSync, setDataSync] = useState({
+    dataInicio: null,
+    dataFim: null
   });
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [dataError, setDataError] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   
   useEffect(() => {
@@ -61,12 +75,48 @@ function Configuracoes() {
     });
   };
   
+  const handleDateChange = (name, value) => {
+    setDataSync({
+      ...dataSync,
+      [name]: value
+    });
+  };
+  
+  const validateDateRange = () => {
+    if (!dataSync.dataInicio || !dataSync.dataFim) {
+      setDataError('As datas inicial e final são obrigatórias');
+      return false;
+    }
+    
+    const inicio = new Date(dataSync.dataInicio);
+    const fim = new Date(dataSync.dataFim);
+    
+    if (inicio > fim) {
+      setDataError('A data inicial não pode ser posterior à data final');
+      return false;
+    }
+    
+    // Calcular diferença em dias
+    const diffTime = Math.abs(fim - inicio);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays > 30) {
+      setDataError('O intervalo máximo entre as datas é de 30 dias');
+      return false;
+    }
+    
+    setDataError('');
+    return true;
+  };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     
     try {
-      await api.post('/config', config);
+      const response = await api.post('/config', config);
+      
+      setConfig(response.data.config);
       
       setSnackbar({
         open: true,
@@ -79,6 +129,61 @@ function Configuracoes() {
       setSnackbar({
         open: true,
         message: err.response?.data?.message || 'Erro ao salvar configurações',
+        severity: 'error'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  const handleSyncFuncionarios = async () => {
+    setSaving(true);
+    
+    try {
+      const response = await api.post('/funcionarios/sync');
+      
+      setSnackbar({
+        open: true,
+        message: `Sincronização concluída: ${response.data.registrosAtualizados} funcionários atualizados`,
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Erro ao sincronizar funcionários:', err);
+      
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || 'Erro ao sincronizar funcionários',
+        severity: 'error'
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+  
+  const handleSyncAbsenteismo = async () => {
+    if (!validateDateRange()) {
+      return;
+    }
+    
+    setSaving(true);
+    
+    try {
+      const response = await api.post('/absenteismo/sync', {
+        dataInicio: dataSync.dataInicio,
+        dataFim: dataSync.dataFim
+      });
+      
+      setSnackbar({
+        open: true,
+        message: `Sincronização concluída: ${response.data.registrosAtualizados} registros de absenteísmo atualizados`,
+        severity: 'success'
+      });
+    } catch (err) {
+      console.error('Erro ao sincronizar absenteísmo:', err);
+      
+      setSnackbar({
+        open: true,
+        message: err.response?.data?.message || 'Erro ao sincronizar absenteísmo',
         severity: 'error'
       });
     } finally {
@@ -118,7 +223,7 @@ function Configuracoes() {
           <Divider sx={{ mb: 2 }} />
           
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 label="Código da API"
@@ -129,12 +234,23 @@ function Configuracoes() {
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 label="Chave da API"
                 name="chave_funcionario"
                 value={config.chave_funcionario}
+                onChange={handleChange}
+                required
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Código da Empresa"
+                name="codigo_empresa_funcionario"
+                value={config.codigo_empresa_funcionario}
                 onChange={handleChange}
                 required
                 margin="normal"
@@ -215,13 +331,25 @@ function Configuracoes() {
             </Grid>
           </Grid>
           
+          <Box sx={{ mt: 2, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleSyncFuncionarios}
+              disabled={saving}
+              sx={{ mr: 2 }}
+            >
+              Sincronizar Funcionários
+            </Button>
+          </Box>
+          
           <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
             API de Absenteísmo
           </Typography>
           <Divider sx={{ mb: 2 }} />
           
           <Grid container spacing={2}>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 label="Código da API"
@@ -232,7 +360,7 @@ function Configuracoes() {
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={4}>
               <TextField
                 fullWidth
                 label="Chave da API"
@@ -243,7 +371,74 @@ function Configuracoes() {
                 margin="normal"
               />
             </Grid>
+            <Grid item xs={12} md={4}>
+              <TextField
+                fullWidth
+                label="Código da Empresa"
+                name="codigo_empresa_absenteismo"
+                value={config.codigo_empresa_absenteismo}
+                onChange={handleChange}
+                required
+                margin="normal"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Código da Empresa Principal"
+                name="codigo_empresa_principal"
+                value={config.codigo_empresa_principal}
+                onChange={handleChange}
+                required
+                margin="normal"
+              />
+            </Grid>
           </Grid>
+          
+          <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
+            Período para Sincronização
+          </Typography>
+          
+          {dataError && (
+            <Alert severity="error" sx={{ mt: 1, mb: 2 }}>
+              {dataError}
+            </Alert>
+          )}
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="Data Inicial"
+                value={dataSync.dataInicio}
+                onChange={(newValue) => handleDateChange('dataInicio', newValue)}
+                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
+                format="dd/MM/yyyy"
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <DatePicker
+                label="Data Final"
+                value={dataSync.dataFim}
+                onChange={(newValue) => handleDateChange('dataFim', newValue)}
+                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
+                format="dd/MM/yyyy"
+              />
+              <FormHelperText>Máximo de 30 dias entre as datas</FormHelperText>
+            </Grid>
+          </Grid>
+          
+          <Box sx={{ mt: 2, mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+            <Button
+              variant="outlined"
+              color="primary"
+              onClick={handleSyncAbsenteismo}
+              disabled={saving}
+            >
+              Sincronizar Absenteísmo
+            </Button>
+          </Box>
+          
+          <Divider sx={{ mb: 3 }} />
           
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end' }}>
             <Button
@@ -252,7 +447,7 @@ function Configuracoes() {
               color="primary"
               disabled={saving}
             >
-              {saving ? 'Salvando...' : 'Salvar'}
+              {saving ? 'Salvando...' : 'Salvar Configurações'}
             </Button>
           </Box>
         </form>
