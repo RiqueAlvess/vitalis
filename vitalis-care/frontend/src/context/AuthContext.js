@@ -17,43 +17,51 @@ export const AuthProvider = ({ children }) => {
   
   // Verificar se o usuário está autenticado ao carregar a página
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      
-      if (token) {
-        try {
-          // Verificar se o token expirou
-          const decoded = jwt_decode(token);
-          const currentTime = Date.now() / 1000;
-          
-          if (decoded.exp < currentTime) {
-            // Token expirado
-            logout();
-          } else {
-            // Token válido
-            setAuthToken(token);
-            
-            // Buscar perfil do usuário
-            try {
-              const res = await api.get('/auth/profile');
-              setUser(res.data.user);
-              setIsAuthenticated(true);
-            } catch (err) {
-              console.error('Erro ao buscar perfil:', err);
-              logout();
-            }
-          }
-        } catch (err) {
-          console.error('Erro ao decodificar token:', err);
-          logout();
-        }
-      }
-      
-      setLoading(false);
-    };
+  const checkAuth = async () => {
+    const token = localStorage.getItem('token');
     
-    checkAuth();
-  }, []);
+    if (token) {
+      try {
+        // Make sure token is a string before decoding
+        if (typeof token !== 'string') {
+          logout();
+          return;
+        }
+        
+        // Verify token format before decoding
+        if (!token.includes('.')) {
+          logout();
+          return;
+        }
+        
+        const decoded = jwt_decode(token);
+        const currentTime = Date.now() / 1000;
+        
+        if (decoded.exp < currentTime) {
+          logout();
+        } else {
+          setAuthToken(token);
+          
+          try {
+            const res = await api.get('/auth/profile');
+            setUser(res.data.user);
+            setIsAuthenticated(true);
+          } catch (err) {
+            console.error('Error fetching profile:', err);
+            logout();
+          }
+        }
+      } catch (err) {
+        console.error('Token decode error:', err);
+        logout();
+      }
+    }
+    
+    setLoading(false);
+  };
+  
+  checkAuth();
+}, []);
   
   // Login
   const login = async (email, senha) => {
