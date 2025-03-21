@@ -12,10 +12,10 @@ import {
   Alert 
 } from '@mui/material';
 import { LockOutlined as LockOutlinedIcon } from '@mui/icons-material';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
-function Login() {
+function Login({ setIsAuthenticated, setUser }) {
   const [formData, setFormData] = useState({
     email: '',
     senha: ''
@@ -23,7 +23,6 @@ function Login() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
   
   const { email, senha } = formData;
   
@@ -44,15 +43,24 @@ function Login() {
     setLoading(true);
     
     try {
-      const result = await login(email, senha);
+      const res = await axios.post('/api/auth/login', { email, senha });
       
-      if (result.success) {
+      if (res.data.token) {
+        // Salvar token
+        localStorage.setItem('token', res.data.token);
+        
+        // Configurar cabeçalho para requisições futuras
+        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+        
+        // Atualizar estado
+        setUser(res.data.user);
+        setIsAuthenticated(true);
+        
+        // Redirecionar
         navigate('/');
-      } else {
-        setError(result.message);
       }
     } catch (err) {
-      setError('Erro ao fazer login. Tente novamente.');
+      setError(err.response?.data?.message || 'Erro ao fazer login. Tente novamente.');
       console.error('Erro ao fazer login:', err);
     } finally {
       setLoading(false);
