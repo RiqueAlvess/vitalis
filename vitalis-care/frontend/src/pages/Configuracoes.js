@@ -11,11 +11,7 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
-  Divider,
-  FormControl,
-  InputLabel,
-  OutlinedInput,
-  FormHelperText
+  Divider
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import api from '../services/api';
@@ -36,10 +32,8 @@ function Configuracoes() {
     codigo_empresa_principal: ''
   });
   
-  const [dataSync, setDataSync] = useState({
-    dataInicio: null,
-    dataFim: null
-  });
+  const [dataInicio, setDataInicio] = useState(null);
+  const [dataFim, setDataFim] = useState(null);
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -75,29 +69,19 @@ function Configuracoes() {
     });
   };
   
-  const handleDateChange = (name, value) => {
-    setDataSync({
-      ...dataSync,
-      [name]: value
-    });
-  };
-  
   const validateDateRange = () => {
-    if (!dataSync.dataInicio || !dataSync.dataFim) {
+    if (!dataInicio || !dataFim) {
       setDataError('As datas inicial e final são obrigatórias');
       return false;
     }
     
-    const inicio = new Date(dataSync.dataInicio);
-    const fim = new Date(dataSync.dataFim);
-    
-    if (inicio > fim) {
+    if (dataInicio > dataFim) {
       setDataError('A data inicial não pode ser posterior à data final');
       return false;
     }
     
     // Calcular diferença em dias
-    const diffTime = Math.abs(fim - inicio);
+    const diffTime = Math.abs(dataFim - dataInicio);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays > 30) {
@@ -169,8 +153,8 @@ function Configuracoes() {
     
     try {
       const response = await api.post('/absenteismo/sync', {
-        dataInicio: dataSync.dataInicio,
-        dataFim: dataSync.dataFim
+        dataInicio: dataInicio.toISOString(),
+        dataFim: dataFim.toISOString()
       });
       
       setSnackbar({
@@ -228,7 +212,7 @@ function Configuracoes() {
                 fullWidth
                 label="Código da API"
                 name="codigo_funcionario"
-                value={config.codigo_funcionario}
+                value={config.codigo_funcionario || ''}
                 onChange={handleChange}
                 required
                 margin="normal"
@@ -239,7 +223,7 @@ function Configuracoes() {
                 fullWidth
                 label="Chave da API"
                 name="chave_funcionario"
-                value={config.chave_funcionario}
+                value={config.chave_funcionario || ''}
                 onChange={handleChange}
                 required
                 margin="normal"
@@ -250,9 +234,8 @@ function Configuracoes() {
                 fullWidth
                 label="Código da Empresa"
                 name="codigo_empresa_funcionario"
-                value={config.codigo_empresa_funcionario}
+                value={config.codigo_empresa_funcionario || ''}
                 onChange={handleChange}
-                required
                 margin="normal"
               />
             </Grid>
@@ -267,7 +250,7 @@ function Configuracoes() {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={config.flag_ativo}
+                        checked={config.flag_ativo || false}
                         onChange={handleChange}
                         name="flag_ativo"
                       />
@@ -280,7 +263,7 @@ function Configuracoes() {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={config.flag_inativo}
+                        checked={config.flag_inativo || false}
                         onChange={handleChange}
                         name="flag_inativo"
                       />
@@ -293,7 +276,7 @@ function Configuracoes() {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={config.flag_pendente}
+                        checked={config.flag_pendente || false}
                         onChange={handleChange}
                         name="flag_pendente"
                       />
@@ -306,7 +289,7 @@ function Configuracoes() {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={config.flag_ferias}
+                        checked={config.flag_ferias || false}
                         onChange={handleChange}
                         name="flag_ferias"
                       />
@@ -319,7 +302,7 @@ function Configuracoes() {
                   <FormControlLabel
                     control={
                       <Checkbox
-                        checked={config.flag_afastado}
+                        checked={config.flag_afastado || false}
                         onChange={handleChange}
                         name="flag_afastado"
                       />
@@ -349,47 +332,45 @@ function Configuracoes() {
           <Divider sx={{ mb: 2 }} />
           
           <Grid container spacing={2}>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 label="Código da API"
                 name="codigo_absenteismo"
-                value={config.codigo_absenteismo}
+                value={config.codigo_absenteismo || ''}
                 onChange={handleChange}
                 required
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 label="Chave da API"
                 name="chave_absenteismo"
-                value={config.chave_absenteismo}
+                value={config.chave_absenteismo || ''}
                 onChange={handleChange}
                 required
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 label="Código da Empresa"
                 name="codigo_empresa_absenteismo"
-                value={config.codigo_empresa_absenteismo}
+                value={config.codigo_empresa_absenteismo || ''}
                 onChange={handleChange}
-                required
                 margin="normal"
               />
             </Grid>
-            <Grid item xs={12} md={6}>
+            <Grid item xs={12} md={3}>
               <TextField
                 fullWidth
                 label="Código da Empresa Principal"
                 name="codigo_empresa_principal"
-                value={config.codigo_empresa_principal}
+                value={config.codigo_empresa_principal || ''}
                 onChange={handleChange}
-                required
                 margin="normal"
               />
             </Grid>
@@ -409,8 +390,8 @@ function Configuracoes() {
             <Grid item xs={12} sm={6}>
               <DatePicker
                 label="Data Inicial"
-                value={dataSync.dataInicio}
-                onChange={(newValue) => handleDateChange('dataInicio', newValue)}
+                value={dataInicio}
+                onChange={setDataInicio}
                 slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
                 format="dd/MM/yyyy"
               />
@@ -418,12 +399,14 @@ function Configuracoes() {
             <Grid item xs={12} sm={6}>
               <DatePicker
                 label="Data Final"
-                value={dataSync.dataFim}
-                onChange={(newValue) => handleDateChange('dataFim', newValue)}
+                value={dataFim}
+                onChange={setDataFim}
                 slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
                 format="dd/MM/yyyy"
               />
-              <FormHelperText>Máximo de 30 dias entre as datas</FormHelperText>
+              <Typography variant="caption" color="text.secondary">
+                Máximo de 30 dias entre as datas
+              </Typography>
             </Grid>
           </Grid>
           
