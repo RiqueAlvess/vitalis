@@ -20,13 +20,16 @@ class ConfigAPI {
         empresa_id,
         chave_funcionario,
         codigo_funcionario,
+        codigo_empresa_funcionario,
         flag_ativo,
         flag_inativo,
         flag_pendente,
         flag_ferias,
         flag_afastado,
         chave_absenteismo,
-        codigo_absenteismo
+        codigo_absenteismo,
+        codigo_empresa_absenteismo,
+        codigo_empresa_principal
       } = configData;
       
       // Verificar se já existe uma configuração para esta empresa
@@ -39,19 +42,23 @@ class ConfigAPI {
            SET 
              chave_funcionario = $1,
              codigo_funcionario = $2,
-             flag_ativo = $3,
-             flag_inativo = $4,
-             flag_pendente = $5,
-             flag_ferias = $6,
-             flag_afastado = $7,
-             chave_absenteismo = $8,
-             codigo_absenteismo = $9,
+             codigo_empresa_funcionario = $3,
+             flag_ativo = $4,
+             flag_inativo = $5,
+             flag_pendente = $6,
+             flag_ferias = $7,
+             flag_afastado = $8,
+             chave_absenteismo = $9,
+             codigo_absenteismo = $10,
+             codigo_empresa_absenteismo = $11,
+             codigo_empresa_principal = $12,
              updated_at = CURRENT_TIMESTAMP
-           WHERE empresa_id = $10
+           WHERE empresa_id = $13
            RETURNING *`,
           [
             chave_funcionario,
             codigo_funcionario,
+            codigo_empresa_funcionario || '',
             flag_ativo || false,
             flag_inativo || false,
             flag_pendente || false,
@@ -59,6 +66,8 @@ class ConfigAPI {
             flag_afastado || false,
             chave_absenteismo,
             codigo_absenteismo,
+            codigo_empresa_absenteismo || '',
+            codigo_empresa_principal || '',
             empresa_id
           ]
         );
@@ -71,26 +80,32 @@ class ConfigAPI {
              empresa_id,
              chave_funcionario,
              codigo_funcionario,
+             codigo_empresa_funcionario,
              flag_ativo,
              flag_inativo,
              flag_pendente,
              flag_ferias,
              flag_afastado,
              chave_absenteismo,
-             codigo_absenteismo
-           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+             codigo_absenteismo,
+             codigo_empresa_absenteismo,
+             codigo_empresa_principal
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
            RETURNING *`,
           [
             empresa_id,
             chave_funcionario,
             codigo_funcionario,
+            codigo_empresa_funcionario || '',
             flag_ativo || false,
             flag_inativo || false,
             flag_pendente || false,
             flag_ferias || false,
             flag_afastado || false,
             chave_absenteismo,
-            codigo_absenteismo
+            codigo_absenteismo,
+            codigo_empresa_absenteismo || '',
+            codigo_empresa_principal || ''
           ]
         );
         
