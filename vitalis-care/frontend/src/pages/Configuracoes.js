@@ -59,7 +59,10 @@ function Configuracoes() {
     fetchConfig();
   }, []);
   
+  // Corrected handleChange function
   const handleChange = (e) => {
+    if (!e || !e.target) return; // Guard clause to prevent errors
+    
     const { name, value, checked, type } = e.target;
     
     setConfig({
@@ -68,8 +71,9 @@ function Configuracoes() {
     });
   };
   
-  // Função para validar o formato da data (DD/MM/AAAA)
+  // Function to validate date format (DD/MM/YYYY)
   const isValidDate = (dateStr) => {
+    if (!dateStr) return false;
     const regex = /^\d{2}\/\d{2}\/\d{4}$/;
     if (!regex.test(dateStr)) return false;
     
@@ -81,8 +85,9 @@ function Configuracoes() {
            date.getFullYear() === year;
   };
   
-  // Função para converter data de DD/MM/AAAA para formato ISO
+  // Function to convert date from DD/MM/YYYY to ISO format
   const convertToISODate = (dateStr) => {
+    if (!dateStr) return '';
     const [day, month, year] = dateStr.split('/').map(Number);
     return new Date(year, month - 1, day).toISOString();
   };
@@ -106,7 +111,7 @@ function Configuracoes() {
       return false;
     }
     
-    // Calcular diferença em dias
+    // Calculate difference in days
     const diffTime = Math.abs(fimDate - inicioDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
@@ -120,7 +125,7 @@ function Configuracoes() {
   };
   
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setSaving(true);
     
     try {
