@@ -13,7 +13,6 @@ import {
   Snackbar,
   Divider
 } from '@mui/material';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import api from '../services/api';
 
 function Configuracoes() {
@@ -32,8 +31,8 @@ function Configuracoes() {
     codigo_empresa_principal: ''
   });
   
-  const [dataInicio, setDataInicio] = useState(null);
-  const [dataFim, setDataFim] = useState(null);
+  const [dataInicio, setDataInicio] = useState('');
+  const [dataFim, setDataFim] = useState('');
   
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -69,19 +68,46 @@ function Configuracoes() {
     });
   };
   
+  // Função para validar o formato da data (DD/MM/AAAA)
+  const isValidDate = (dateStr) => {
+    const regex = /^\d{2}\/\d{2}\/\d{4}$/;
+    if (!regex.test(dateStr)) return false;
+    
+    const [day, month, year] = dateStr.split('/').map(Number);
+    const date = new Date(year, month - 1, day);
+    
+    return date.getDate() === day && 
+           date.getMonth() === month - 1 && 
+           date.getFullYear() === year;
+  };
+  
+  // Função para converter data de DD/MM/AAAA para formato ISO
+  const convertToISODate = (dateStr) => {
+    const [day, month, year] = dateStr.split('/').map(Number);
+    return new Date(year, month - 1, day).toISOString();
+  };
+  
   const validateDateRange = () => {
     if (!dataInicio || !dataFim) {
       setDataError('As datas inicial e final são obrigatórias');
       return false;
     }
     
-    if (dataInicio > dataFim) {
+    if (!isValidDate(dataInicio) || !isValidDate(dataFim)) {
+      setDataError('Formato de data inválido. Use DD/MM/AAAA');
+      return false;
+    }
+    
+    const inicioDate = new Date(convertToISODate(dataInicio));
+    const fimDate = new Date(convertToISODate(dataFim));
+    
+    if (inicioDate > fimDate) {
       setDataError('A data inicial não pode ser posterior à data final');
       return false;
     }
     
     // Calcular diferença em dias
-    const diffTime = Math.abs(dataFim - dataInicio);
+    const diffTime = Math.abs(fimDate - inicioDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
     if (diffDays > 30) {
@@ -152,9 +178,12 @@ function Configuracoes() {
     setSaving(true);
     
     try {
+      const inicioISO = convertToISODate(dataInicio);
+      const fimISO = convertToISODate(dataFim);
+      
       const response = await api.post('/absenteismo/sync', {
-        dataInicio: dataInicio.toISOString(),
-        dataFim: dataFim.toISOString()
+        dataInicio: inicioISO,
+        dataFim: fimISO
       });
       
       setSnackbar({
@@ -388,25 +417,25 @@ function Configuracoes() {
           
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <DatePicker
-                label="Data Inicial"
+              <TextField
+                fullWidth
+                label="Data Inicial (DD/MM/AAAA)"
                 value={dataInicio}
-                onChange={setDataInicio}
-                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
-                format="dd/MM/yyyy"
+                onChange={(e) => setDataInicio(e.target.value)}
+                placeholder="01/01/2024"
+                margin="normal"
               />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <DatePicker
-                label="Data Final"
+              <TextField
+                fullWidth
+                label="Data Final (DD/MM/AAAA)"
                 value={dataFim}
-                onChange={setDataFim}
-                slotProps={{ textField: { fullWidth: true, margin: 'normal' } }}
-                format="dd/MM/yyyy"
+                onChange={(e) => setDataFim(e.target.value)}
+                placeholder="31/01/2024"
+                margin="normal"
+                helperText="Máximo de 30 dias entre as datas"
               />
-              <Typography variant="caption" color="text.secondary">
-                Máximo de 30 dias entre as datas
-              </Typography>
             </Grid>
           </Grid>
           
